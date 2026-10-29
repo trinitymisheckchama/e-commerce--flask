@@ -408,6 +408,84 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .seller-listing-copy span { color: var(--muted); font-size: 10px; }
 .seller-listing-price { flex: 0 0 auto; font-size: 12px; }
 .seller-form-title { margin: 20px 0 -7px; font-size: 16px; }
+.dialog.seller-dashboard-dialog { width: min(950px, calc(100% - 32px)); padding: 28px; }
+.seller-dashboard-dialog .seller-heading { padding-right: 35px; }
+.seller-dashboard-dialog .seller-heading h2 { margin-bottom: 12px; }
+.seller-performance { padding: 3px 0 18px; border-bottom: 1px solid var(--line); }
+.seller-metrics { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.seller-metric { min-width: 0; display: grid; gap: 7px; padding: 12px; border-right: 1px solid var(--line); }
+.seller-metric:first-child { padding-left: 0; }
+.seller-metric:last-child { border-right: 0; }
+.seller-metric span { color: var(--muted); font-size: 10px; }
+.seller-metric strong { overflow: hidden; color: var(--green-dark); font-size: 18px; text-overflow: ellipsis; white-space: nowrap; }
+.seller-performance-charts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; padding-top: 18px; }
+.seller-performance-chart { min-width: 0; }
+.seller-performance-chart .admin-section-heading { margin-bottom: 3px; }
+.seller-listing-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin: 18px 0 10px; }
+.seller-listing-heading h3 { margin: 0; font-size: 14px; }
+.seller-listing-heading .seller-list-message { text-align: right; }
+.dialog.admin-dashboard-dialog { width: min(1050px, calc(100% - 32px)); padding: 28px; }
+.admin-dashboard-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; padding-right: 35px; }
+.admin-dashboard-header h2 { margin-bottom: 12px; }
+.admin-message { min-height: 16px; margin: 0 0 10px; color: #a13e2d; font-size: 11px; }
+.admin-metrics { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.admin-metric { min-width: 0; display: grid; gap: 8px; padding: 14px 12px; border-right: 1px solid var(--line); }
+.admin-metric:first-child { padding-left: 0; }
+.admin-metric:last-child { border-right: 0; }
+.admin-metric span, .admin-section-heading > span { color: var(--muted); font-size: 10px; }
+.admin-metric strong { overflow: hidden; color: var(--green-dark); font-size: 20px; text-overflow: ellipsis; white-space: nowrap; }
+.admin-reports { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(220px, 1fr); gap: 24px; padding: 22px 0; border-bottom: 1px solid var(--line); }
+.admin-report { min-width: 0; }
+.admin-section-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 12px; }
+.admin-section-heading h3 { margin: 0; font-size: 14px; }
+.admin-chart svg { width: 100%; height: auto; overflow: visible; }
+.chart-grid { fill: none; stroke: #dfe1d8; stroke-width: 1; }
+.chart-line { fill: none; stroke: var(--coral); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.chart-dot { fill: var(--coral); stroke: var(--paper); stroke-width: 2; }
+.chart-label { fill: var(--muted); font-family: var(--sans); font-size: 11px; }
+.chart-empty { margin: 5px 0; color: var(--muted); font-size: 11px; }
+.account-chart-legend { display: grid; gap: 11px; }
+.account-chart-row { display: grid; gap: 5px; }
+.account-chart-label { display: flex; justify-content: space-between; gap: 10px; color: var(--muted); font-size: 10px; text-transform: capitalize; }
+.account-chart-label strong { color: var(--ink); }
+.account-chart-track { height: 7px; overflow: hidden; background: #e7e8e1; }
+.account-chart-bar { display: block; height: 100%; min-width: 3px; }
+.admin-accounts { padding-top: 20px; }
+.admin-table-wrap { max-height: 270px; overflow: auto; }
+.admin-table { width: 100%; border-collapse: collapse; text-align: left; }
+.admin-table th { position: sticky; top: 0; z-index: 1; background: var(--paper); color: var(--muted); font-size: 9px; font-weight: 600; text-transform: uppercase; }
+.admin-table th, .admin-table td { padding: 9px 10px; border-bottom: 1px solid var(--line); }
+.admin-table th:first-child, .admin-table td:first-child { padding-left: 0; }
+.admin-table td { font-size: 11px; }
+.admin-account-name, .admin-account-email { display: block; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.admin-account-email { margin-top: 3px; color: var(--muted); font-size: 10px; }
+.account-status { display: inline-block; padding: 4px 7px; background: #e3eee7; color: var(--green-dark); font-size: 9px; text-transform: capitalize; }
+.account-status.is-disabled { background: #f5e9d8; color: #88572d; }
+.account-status.is-deleted { background: #f1e2df; color: #994c40; }
+.admin-row-actions { display: flex; gap: 6px; }
+.admin-action { padding: 5px 7px; border: 1px solid var(--line); background: transparent; color: var(--green-dark); cursor: pointer; font-size: 9px; }
+.admin-action.is-danger { color: #a13e2d; }
+.admin-protected-label { color: var(--muted); font-size: 9px; }
+.admin-create-account { margin-top: 18px; border-top: 1px solid var(--line); padding-top: 15px; }
+.admin-create-account summary { color: var(--green-dark); cursor: pointer; font-size: 12px; font-weight: 700; }
+.admin-create-account .form-stack { max-width: 420px; }
+@media (max-width: 720px) {
+    .dialog.seller-dashboard-dialog { padding: 24px 18px; }
+    .seller-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .seller-metric:nth-child(3) { border-right: 0; }
+    .seller-metric:nth-child(n + 4) { border-top: 1px solid var(--line); }
+    .seller-metric:nth-child(4) { padding-left: 0; }
+    .seller-performance-charts { grid-template-columns: 1fr; gap: 12px; }
+    .seller-listing-heading { align-items: flex-start; flex-direction: column; }
+    .seller-listing-heading .seller-list-message { text-align: left; }
+    .dialog.admin-dashboard-dialog { padding: 24px 18px; }
+    .admin-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .admin-metric:nth-child(3) { border-right: 0; }
+    .admin-metric:nth-child(n + 4) { border-top: 1px solid var(--line); }
+    .admin-metric:nth-child(4) { padding-left: 0; }
+    .admin-reports { grid-template-columns: 1fr; gap: 20px; }
+    .admin-table { min-width: 540px; }
+}
 
 .dialog {
     position: fixed;

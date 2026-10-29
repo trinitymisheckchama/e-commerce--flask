@@ -7,6 +7,11 @@ const elements = {
     accountSubmit: document.querySelector("#account-submit"),
     adminDialog: document.querySelector("#admin-dialog"),
     adminMessage: document.querySelector("#admin-message"),
+    adminMetrics: document.querySelector("#admin-metrics"),
+    adminUserRows: document.querySelector("#admin-user-rows"),
+    adminCreateForm: document.querySelector("#admin-create-form"),
+    adminCreateMessage: document.querySelector("#admin-create-message"),
+    adminCreateSubmit: document.querySelector("#admin-create-submit"),
     bagButton: document.querySelector("#bag-button"),
     bagCount: document.querySelector("#bag-count"),
     cartCountLabel: document.querySelector("#cart-count-label"),
@@ -28,8 +33,12 @@ const elements = {
     searchInput: document.querySelector("#search-input"),
     sellerButton: document.querySelector("#seller-button"),
     sellerDialog: document.querySelector("#seller-dialog"),
+    sellerPerformance: document.querySelector("#seller-performance"),
+    sellerPerformanceButton: document.querySelector("#seller-performance-button"),
     sellerListings: document.querySelector("#seller-listings"),
+    sellerListingsSection: document.querySelector("#seller-listings-section"),
     sellerListMessage: document.querySelector("#seller-list-message"),
+    sellerMetrics: document.querySelector("#seller-metrics"),
     sortSelect: document.querySelector("#sort-select"),
     scrim: document.querySelector("#scrim"),
     toast: document.querySelector("#toast")
@@ -127,8 +136,8 @@ function createProductCard(product, index) {
     visual.append(makeElement("span", "product-category", product.category));
     const addButton = makeElement("button", "add-button", "+");
     addButton.type = "button";
-    addButton.title = `Add ${product.name} to bag`;
-    addButton.setAttribute("aria-label", `Add ${product.name} to bag`);
+    addButton.title = `Add ${product.name} to cart`;
+    addButton.setAttribute("aria-label", `Add ${product.name} to cart`);
     addButton.disabled = Number(product.stock) < 1;
     addButton.addEventListener("click", () => addToCart(product));
     visual.append(addButton);
@@ -198,7 +207,7 @@ function addToCart(product) {
     state.cart[id] = { product, quantity: current + 1 };
     saveCart();
     renderCart();
-    showToast(`${product.name} added to your bag`);
+    showToast(`${product.name} added to your cart`);
 }
 
 function changeQuantity(id, amount) {
@@ -222,7 +231,7 @@ function renderCart() {
     elements.cartItems.replaceChildren();
 
     if (!entries.length) {
-        elements.cartItems.append(makeElement("p", "cart-empty", "Your bag is taking a little breather."));
+        elements.cartItems.append(makeElement("p", "cart-empty", "Your cart is empty."));
         return;
     }
 
@@ -304,11 +313,16 @@ function openAccount(mode = "login") {
 
 function renderAccountButton() {
     const isSeller = state.user?.role === "seller";
+    const isAdmin = state.user?.role === "admin";
+    elements.accountButton.classList.toggle("seller-header-signout", isSeller);
+    elements.accountButton.classList.toggle("text-button", !isSeller);
     document.querySelector("#seller-header-signout").hidden = !isSeller;
+    elements.sellerPerformanceButton.hidden = !isSeller;
+    document.querySelector("#admin-header-signout").hidden = !isAdmin;
     if (!state.user) {
         elements.accountButton.textContent = "Sign in";
     } else if (isSeller) {
-        elements.accountButton.textContent = "Seller studio";
+        elements.accountButton.textContent = "Add product";
     } else if (state.user.role === "admin") {
         elements.accountButton.textContent = "Admin dashboard";
     } else {
@@ -319,17 +333,202 @@ function renderAccountButton() {
 async function openAdminDashboard() {
     elements.adminMessage.textContent = "Loading dashboard...";
     elements.adminDialog.showModal();
+    document.querySelector("#admin-header-signout").hidden = true;
+    await Promise.all([loadAdminAccounts(), loadAdminReports()]);
+}
+
+async function loadAdminAccounts() {
     try {
-        const data = await request("/admin-dashboard");
-        elements.adminMessage.textContent = data.message;
+        const data = await request("/api/admin/users");
+        renderAdminAccounts(data.users || []);
     } catch (error) {
         elements.adminMessage.textContent = error.message;
     }
 }
 
-async function openSellerDashboard() {
+function renderAdminAccounts(users) {
+    elements.adminUserRows.replaceChildren();
+    document.querySelector("#account-count").textContent = `${users.length} total`;
+    users.forEach((user) => {
+        const row = document.createElement("tr");
+        const accountCell = document.createElement("td");
+        accountCell.append(makeElement("strong", "admin-account-name", user.username));
+        accountCell.append(makeElement("span", "admin-account-email", user.email));
+        const roleCell = makeElement("td", "", user.role);
+        const statusCell = document.createElement("td");
+        statusCell.append(makeElement("span", `account-status is-${user.status}`, user.status));
+        const actionsCell = document.createElement("td");
+        const actions = makeElement("div", "admin-row-actions");
+
+        if (user.role !== "admin" && user.status !== "deleted") {
+            const statusButton = makeElement("button", "admin-action", user.status === "active" ? "Disable" : "Enable");
+            statusButton.type = "button";
+            statusButton.addEventListener("click", () => changeAccountStatus(user.id, user.status === "active" ? "disabled" : "active"));
+            const deleteButton = makeElement("button", "admin-action is-danger", "Delete");
+            deleteButton.type = "button";
+            deleteButton.addEventListener("click", () => deleteAccount(user.id, user.username));
+            actions.append(statusButton, deleteButton);
+        } else if (user.role === "admin") {
+            actions.append(makeElement("span", "admin-protected-label", "Protected"));
+        } else {
+            actions.append(makeElement("span", "admin-protected-label", "Removed"));
+        }
+
+        actionsCell.append(actions);
+        row.append(accountCell, roleCell, statusCell, actionsCell);
+        elements.adminUserRows.append(row);
+    });
+    elements.adminMessage.textContent = "";
+}
+
+async function changeAccountStatus(id, status) {
+    try {
+        await request(`/api/admin/users/${id}/status`, { method: "PATCH", body: JSON.stringify({ status }) });
+        await Promise.all([loadAdminAccounts(), loadAdminReports()]);
+        showToast(`Account ${status}.`);
+    } catch (error) {
+        elements.adminMessage.textContent = error.message;
+    }
+}
+
+async function deleteAccount(id, username) {
+    if (!window.confirm(`Delete ${username}'s account? You can no longer re-enable it.`)) return;
+    try {
+        await request(`/api/admin/users/${id}`, { method: "DELETE" });
+        await Promise.all([loadAdminAccounts(), loadAdminReports()]);
+        showToast("Account deleted.");
+    } catch (error) {
+        elements.adminMessage.textContent = error.message;
+    }
+}
+
+async function loadAdminReports() {
+    try {
+        const data = await request("/api/admin/reports");
+        renderAdminReports(data);
+    } catch (error) {
+        elements.adminMessage.textContent = error.message;
+    }
+}
+
+function renderAdminReports({ summary, monthlyOrders, accountsByRole }) {
+    const metrics = [
+        ["Accounts", summary.totalAccounts],
+        ["Active accounts", summary.activeAccounts],
+        ["Active sellers", summary.activeSellers],
+        ["Orders", summary.totalOrders],
+        ["Order value", currency.format(Number(summary.orderValue))],
+        ["Seller listings", summary.sellerListings]
+    ];
+    elements.adminMetrics.replaceChildren();
+    metrics.forEach(([label, value]) => {
+        const metric = makeElement("article", "admin-metric");
+        metric.append(makeElement("span", "", label), makeElement("strong", "", String(value)));
+        elements.adminMetrics.append(metric);
+    });
+    renderOrdersChart(monthlyOrders || []);
+    renderAccountsChart(accountsByRole || []);
+}
+
+function renderOrdersChart(rows) {
+    const container = document.querySelector("#orders-chart");
+    container.replaceChildren();
+    const monthlyCounts = new Map(rows.map((row) => [row.month, Number(row.orders)]));
+    const now = new Date();
+    rows = Array.from({ length: 6 }, (_, index) => {
+        const monthDate = new Date(now.getFullYear(), now.getMonth() - 5 + index, 1);
+        const month = `${monthDate.getFullYear()}-${String(monthDate.getMonth() + 1).padStart(2, "0")}`;
+        return { month, orders: monthlyCounts.get(month) || 0 };
+    });
+    const values = rows.map((row) => Number(row.orders));
+    const max = Math.max(1, ...values);
+    const chart = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    chart.setAttribute("viewBox", "0 0 600 190");
+    chart.setAttribute("role", "img");
+    chart.setAttribute("aria-label", "Monthly order count for the last six months");
+    const grid = document.createElementNS(chart.namespaceURI, "path");
+    grid.setAttribute("d", "M42 20V150H590 M42 85H590 M42 20H590");
+    grid.setAttribute("class", "chart-grid");
+    chart.append(grid);
+    const points = rows.map((row, index) => {
+        const x = rows.length === 1 ? 316 : 48 + (index * 540) / (rows.length - 1);
+        const y = 145 - (Number(row.orders) / max) * 112;
+        return { x, y, row };
+    });
+    const line = document.createElementNS(chart.namespaceURI, "polyline");
+    line.setAttribute("points", points.map(({ x, y }) => `${x},${y}`).join(" "));
+    line.setAttribute("class", "chart-line");
+    chart.append(line);
+    points.forEach(({ x, y, row }) => {
+        const dot = document.createElementNS(chart.namespaceURI, "circle");
+        dot.setAttribute("cx", x);
+        dot.setAttribute("cy", y);
+        dot.setAttribute("r", "4");
+        dot.setAttribute("class", "chart-dot");
+        chart.append(dot);
+        const label = document.createElementNS(chart.namespaceURI, "text");
+        label.setAttribute("x", x);
+        label.setAttribute("y", "174");
+        label.setAttribute("text-anchor", "middle");
+        label.setAttribute("class", "chart-label");
+        label.textContent = new Date(`${row.month}-01T00:00:00`).toLocaleDateString(undefined, { month: "short" });
+        chart.append(label);
+    });
+    container.append(chart);
+}
+
+function renderAccountsChart(rows) {
+    const container = document.querySelector("#accounts-chart");
+    container.replaceChildren();
+    const total = Math.max(1, rows.reduce((sum, row) => sum + Number(row.count), 0));
+    const colors = { buyer: "#26745b", seller: "#d8874b", admin: "#536d79" };
+    rows.filter((row) => row.status !== "deleted").forEach((row) => {
+        const item = makeElement("div", "account-chart-row");
+        const label = makeElement("div", "account-chart-label");
+        label.append(makeElement("span", "", `${row.role} · ${row.status}`));
+        label.append(makeElement("strong", "", String(row.count)));
+        const track = makeElement("div", "account-chart-track");
+        const bar = makeElement("span", "account-chart-bar");
+        bar.style.width = `${(Number(row.count) / total) * 100}%`;
+        bar.style.backgroundColor = colors[row.role] || colors.buyer;
+        track.append(bar);
+        item.append(label, track);
+        container.append(item);
+    });
+    if (!container.childElementCount) container.append(makeElement("p", "chart-empty", "No accounts yet."));
+}
+
+async function handleAdminCreate(event) {
+    event.preventDefault();
+    elements.adminCreateMessage.textContent = "";
+    elements.adminCreateSubmit.disabled = true;
+    const payload = Object.fromEntries(new FormData(elements.adminCreateForm).entries());
+    try {
+        await request("/api/admin/users", { method: "POST", body: JSON.stringify(payload) });
+        elements.adminCreateForm.reset();
+        document.querySelector(".admin-create-account").open = false;
+        await Promise.all([loadAdminAccounts(), loadAdminReports()]);
+        showToast("Account created.");
+    } catch (error) {
+        elements.adminCreateMessage.textContent = error.message;
+    } finally {
+        elements.adminCreateSubmit.disabled = false;
+    }
+}
+
+async function openSellerDashboard(view) {
+    const showPerformance = view === "performance";
+    elements.sellerPerformance.hidden = !showPerformance;
+    elements.sellerListingsSection.hidden = !showPerformance;
+    document.querySelector("#seller-form-title").hidden = showPerformance;
+    elements.productForm.hidden = showPerformance;
+    document.querySelector("#seller-title").textContent = showPerformance ? "Your shop performance" : "Add a product";
     elements.sellerDialog.showModal();
-    await loadSellerListings();
+    if (showPerformance) {
+        await Promise.all([loadSellerListings(), loadSellerPerformance()]);
+    } else {
+        elements.productForm.elements.name.focus();
+    }
 }
 
 async function loadSellerListings() {
@@ -352,6 +551,82 @@ async function loadSellerListings() {
     } catch (error) {
         elements.sellerListMessage.textContent = error.message;
     }
+}
+
+async function loadSellerPerformance() {
+    try {
+        const data = await request("/api/products/mine/performance");
+        renderSellerPerformance(data);
+    } catch (error) {
+        elements.sellerMetrics.replaceChildren(makeElement("p", "chart-empty", error.message));
+    }
+}
+
+function renderSellerPerformance({ summary, monthlySales }) {
+    const metrics = [
+        ["Gross sales", currency.format(Number(summary.grossSales))],
+        ["Orders", String(summary.orders)],
+        ["Units sold", String(summary.unitsSold)],
+        ["Listings", String(summary.listings)],
+        ["In stock", String(summary.inventory)]
+    ];
+    elements.sellerMetrics.replaceChildren();
+    metrics.forEach(([label, value]) => {
+        const metric = makeElement("article", "seller-metric");
+        metric.append(makeElement("span", "", label), makeElement("strong", "", value));
+        elements.sellerMetrics.append(metric);
+    });
+    renderSellerChart("#seller-sales-chart", monthlySales, "grossSales", "Gross sales over the last six months", true);
+    renderSellerChart("#seller-units-chart", monthlySales, "unitsSold", "Units sold over the last six months", false);
+}
+
+function renderSellerChart(selector, monthlyRows, valueKey, description, isCurrency) {
+    const container = document.querySelector(selector);
+    container.replaceChildren();
+    const monthlyValues = new Map((monthlyRows || []).map((row) => [row.month, Number(row[valueKey])]));
+    const now = new Date();
+    const rows = Array.from({ length: 6 }, (_, index) => {
+        const monthDate = new Date(now.getFullYear(), now.getMonth() - 5 + index, 1);
+        const month = `${monthDate.getFullYear()}-${String(monthDate.getMonth() + 1).padStart(2, "0")}`;
+        return { month, value: monthlyValues.get(month) || 0 };
+    });
+    const max = Math.max(1, ...rows.map((row) => row.value));
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", "0 0 600 190");
+    svg.setAttribute("role", "img");
+    svg.setAttribute("aria-label", description);
+    const grid = document.createElementNS(svg.namespaceURI, "path");
+    grid.setAttribute("d", "M42 20V150H590 M42 85H590 M42 20H590");
+    grid.setAttribute("class", "chart-grid");
+    svg.append(grid);
+    const points = rows.map((row, index) => ({
+        ...row,
+        x: 48 + (index * 540) / (rows.length - 1),
+        y: 145 - (row.value / max) * 112
+    }));
+    const line = document.createElementNS(svg.namespaceURI, "polyline");
+    line.setAttribute("points", points.map(({ x, y }) => `${x},${y}`).join(" "));
+    line.setAttribute("class", "chart-line");
+    svg.append(line);
+    points.forEach(({ x, y, month, value }) => {
+        const dot = document.createElementNS(svg.namespaceURI, "circle");
+        dot.setAttribute("cx", x);
+        dot.setAttribute("cy", y);
+        dot.setAttribute("r", "4");
+        dot.setAttribute("class", "chart-dot");
+        const title = document.createElementNS(svg.namespaceURI, "title");
+        title.textContent = `${month}: ${isCurrency ? currency.format(value) : `${value} units`}`;
+        dot.append(title);
+        svg.append(dot);
+        const label = document.createElementNS(svg.namespaceURI, "text");
+        label.setAttribute("x", x);
+        label.setAttribute("y", "174");
+        label.setAttribute("text-anchor", "middle");
+        label.setAttribute("class", "chart-label");
+        label.textContent = new Date(`${month}-01T00:00:00`).toLocaleDateString(undefined, { month: "short" });
+        svg.append(label);
+    });
+    container.append(svg);
 }
 
 function signOut() {
@@ -405,8 +680,7 @@ async function handleProductSubmit(event) {
         state.search = "";
         elements.searchInput.value = "";
         showToast("Your product is now on the shelf.");
-        await loadSellerListings();
-        await loadProducts();
+        await Promise.all([loadSellerListings(), loadSellerPerformance(), loadProducts()]);
     } catch (error) {
         elements.productMessage.textContent = error.message;
     } finally {
@@ -417,7 +691,7 @@ async function handleProductSubmit(event) {
 async function placeOrder() {
     const entries = cartEntries();
     if (!entries.length) {
-        showToast("Your bag is empty for now.");
+        showToast("Your cart is empty for now.");
         return;
     }
     if (!state.user) {
@@ -444,7 +718,7 @@ async function handlePaymentSubmit(event) {
     const entries = cartEntries();
     if (!entries.length) {
         elements.paymentDialog.close();
-        showToast("Your bag is empty for now.");
+        showToast("Your cart is empty for now.");
         return;
     }
 
@@ -484,15 +758,17 @@ elements.checkoutButton.addEventListener("click", placeOrder);
 elements.paymentForm.addEventListener("submit", handlePaymentSubmit);
 elements.accountButton.addEventListener("click", () => {
     if (!state.user) openAccount();
-    else if (state.user.role === "seller") openSellerDashboard();
+    else if (state.user.role === "seller") openSellerDashboard("product");
     else if (state.user.role === "admin") openAdminDashboard();
     else signOut();
 });
-document.querySelector("#admin-signout").addEventListener("click", signOut);
+document.querySelector("#admin-header-signout").addEventListener("click", signOut);
+elements.adminCreateForm.addEventListener("submit", handleAdminCreate);
+elements.sellerPerformanceButton.addEventListener("click", () => openSellerDashboard("performance"));
 document.querySelector("#seller-signout").addEventListener("click", signOut);
 document.querySelector("#seller-header-signout").addEventListener("click", signOut);
 elements.sellerButton.addEventListener("click", () => {
-    if (state.user?.role === "seller") openSellerDashboard();
+    if (state.user?.role === "seller") openSellerDashboard("product");
     else if (state.user) showToast("Sign out and create a seller account to open a shop.");
     else {
         openAccount("register");
@@ -504,7 +780,14 @@ elements.productForm.addEventListener("submit", handleProductSubmit);
 document.querySelector("#login-tab").addEventListener("click", () => setAccountMode("login"));
 document.querySelector("#register-tab").addEventListener("click", () => setAccountMode("register"));
 document.querySelectorAll(".dialog-close").forEach((button) => {
-    button.addEventListener("click", () => button.closest("dialog").close());
+    button.addEventListener("click", () => {
+        const dialog = button.closest("dialog");
+        dialog.close();
+        if (dialog === elements.adminDialog) renderAccountButton();
+    });
+});
+elements.adminDialog.addEventListener("cancel", () => {
+    document.querySelector("#admin-header-signout").hidden = state.user?.role !== "admin";
 });
 document.querySelector("#year").textContent = String(new Date().getFullYear());
 

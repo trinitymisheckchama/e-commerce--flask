@@ -37,6 +37,12 @@ For an existing database created before payment selection was added, apply the m
 mysql -u YOUR_DB_USER -p YOUR_DB_NAME < backend/migrations/001_order_payments.sql
 ```
 
+For an existing database created before account management was added, apply this migration once:
+
+```sh
+mysql -u YOUR_DB_USER -p YOUR_DB_NAME < backend/migrations/002_admin_accounts.sql
+```
+
 3. Install dependencies and start the server:
 
    ```sh
@@ -58,4 +64,7 @@ The API is available at `/api/products` and `/api/auth`. Register as a shopper t
 - `POST /api/auth/login` returns a signed token.
 - `POST /api/products/add` creates a product for an authenticated seller.
 - `GET /api/products/mine` lists products for the authenticated seller.
+- `GET /api/products/mine/performance` returns seller-specific listings, inventory, order totals, and six-month sales data.
 - `POST /api/products/checkout` places an order for an authenticated buyer and decrements stock in a MySQL transaction.
+- `/api/admin/users` lists and creates accounts for admins; admins can enable, disable, or soft-delete non-admin accounts.
+- `GET /api/admin/reports` returns account and order metrics for the dashboard.

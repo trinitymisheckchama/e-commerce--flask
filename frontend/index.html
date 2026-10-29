@@ -24,8 +24,10 @@
         </form>
         <nav class="header-actions" aria-label="Account and basket">
             <button class="text-button" id="account-button" type="button">Sign in</button>
+            <button class="seller-header-signout" id="seller-performance-button" type="button" hidden>Show performance</button>
             <button class="seller-header-signout" id="seller-header-signout" type="button" hidden>Sign out</button>
-            <button class="bag-button" id="bag-button" type="button" aria-label="Open shopping bag">Bag <span id="bag-count">0</span></button>
+            <button class="seller-header-signout" id="admin-header-signout" type="button" hidden>Sign out</button>
+            <button class="bag-button" id="bag-button" type="button" aria-label="Open cart">Cart <span id="bag-count">0</span></button>
         </nav>
     </header>
 
@@ -82,8 +84,8 @@
     <div class="scrim" id="scrim" hidden></div>
     <aside class="cart-panel" id="cart-panel" aria-labelledby="cart-title" aria-hidden="true">
         <div class="panel-heading">
-            <div><p class="eyebrow">Your good finds</p><h2 id="cart-title">Your bag <span id="cart-count-label">(0)</span></h2></div>
-            <button class="close-button" id="close-cart" type="button" aria-label="Close shopping bag">×</button>
+            <div><p class="eyebrow">Your good finds</p><h2 id="cart-title">Your cart <span id="cart-count-label">(0)</span></h2></div>
+            <button class="close-button" id="close-cart" type="button" aria-label="Close cart">×</button>
         </div>
         <div class="cart-items" id="cart-items"></div>
         <div class="cart-bottom">
@@ -130,25 +132,71 @@
         </form>
     </dialog>
 
-    <dialog class="dialog" id="admin-dialog" aria-labelledby="admin-title">
+    <dialog class="dialog admin-dashboard-dialog" id="admin-dialog" aria-labelledby="admin-title">
         <button class="close-button dialog-close" type="button" aria-label="Close">×</button>
-        <p class="eyebrow">Good Goods</p>
-        <h2 id="admin-title">Admin dashboard</h2>
-        <p id="admin-message" aria-live="polite">Loading dashboard...</p>
-        <button class="primary-button" id="admin-signout" type="button">Sign out</button>
+        <div class="admin-dashboard-header">
+            <div><p class="eyebrow">Good Goods / Operations</p><h2 id="admin-title">Admin dashboard</h2></div>
+        </div>
+        <p class="admin-message" id="admin-message" aria-live="polite"></p>
+        <section class="admin-metrics" id="admin-metrics" aria-label="Store overview"></section>
+        <section class="admin-reports" aria-label="Website reports">
+            <article class="admin-report">
+                <div class="admin-section-heading"><h3>Order activity</h3><span>Last 6 months</span></div>
+                <div class="admin-chart" id="orders-chart"></div>
+            </article>
+            <article class="admin-report">
+                <div class="admin-section-heading"><h3>Accounts</h3><span>By role and status</span></div>
+                <div class="account-chart-legend" id="accounts-chart"></div>
+            </article>
+        </section>
+        <section class="admin-accounts" aria-labelledby="accounts-title">
+            <div class="admin-section-heading"><h3 id="accounts-title">Accounts</h3><span id="account-count"></span></div>
+            <div class="admin-table-wrap">
+                <table class="admin-table">
+                    <thead><tr><th>Account</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
+                    <tbody id="admin-user-rows"></tbody>
+                </table>
+            </div>
+        </section>
+        <details class="admin-create-account">
+            <summary>Create account</summary>
+            <form class="form-stack" id="admin-create-form">
+                <label class="form-field">Name<input name="username" maxlength="80" required></label>
+                <label class="form-field">Email<input name="email" type="email" required></label>
+                <label class="form-field">Temporary password<input name="password" type="password" minlength="8" autocomplete="new-password" required></label>
+                <label class="form-field">Role<select name="role"><option value="buyer">Buyer</option><option value="seller">Seller</option></select></label>
+                <p class="form-message" id="admin-create-message" aria-live="polite"></p>
+                <button class="primary-button" id="admin-create-submit" type="submit">Create account</button>
+            </form>
+        </details>
     </dialog>
 
-    <dialog class="dialog" id="seller-dialog" aria-labelledby="seller-title">
+    <dialog class="dialog seller-dashboard-dialog" id="seller-dialog" aria-labelledby="seller-title">
         <button class="close-button dialog-close" type="button" aria-label="Close">×</button>
         <p class="eyebrow">Seller studio</p>
         <div class="seller-heading">
-            <h2 id="seller-title">Your listings</h2>
+            <h2 id="seller-title">Your shop performance</h2>
             <button class="seller-signout-button" id="seller-signout" type="button">Sign out</button>
         </div>
-        <p class="seller-list-message" id="seller-list-message" aria-live="polite">Loading your listings...</p>
-        <div class="seller-listings" id="seller-listings"></div>
-        <h3 class="seller-form-title">List a product</h3>
-        <form class="form-stack" id="product-form">
+            <section class="seller-performance" id="seller-performance" aria-label="Shop performance" hidden>
+            <div class="seller-metrics" id="seller-metrics"></div>
+            <div class="seller-performance-charts">
+                <article class="seller-performance-chart">
+                    <div class="admin-section-heading"><h3>Gross sales</h3><span>Last 6 months</span></div>
+                    <div class="admin-chart" id="seller-sales-chart"></div>
+                </article>
+                <article class="seller-performance-chart">
+                    <div class="admin-section-heading"><h3>Units sold</h3><span>Last 6 months</span></div>
+                    <div class="admin-chart" id="seller-units-chart"></div>
+                </article>
+            </div>
+        </section>
+        <section class="seller-listings-section" id="seller-listings-section" hidden>
+            <div class="seller-listing-heading"><h3>Your listings</h3><span id="seller-list-message" aria-live="polite">Loading your listings...</span></div>
+            <div class="seller-listings" id="seller-listings"></div>
+        </section>
+        <h3 class="seller-form-title" id="seller-form-title" hidden>List a product</h3>
+        <form class="form-stack" id="product-form" hidden>
             <label class="form-field">Product name<input name="name" maxlength="120" required></label>
             <label class="form-field">Description<textarea name="description" rows="3" maxlength="1000"></textarea></label>
             <div class="form-pair">

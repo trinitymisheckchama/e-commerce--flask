@@ -26,7 +26,10 @@ const listProducts = (req, res) => {
 
 	db.query(
 		`SELECT id, name, description, price, category, image_url, stock, created_at
-		 FROM products ${where} ORDER BY ${orderBy}`,
+		 FROM products
+		 WHERE (seller_id IS NULL OR seller_id IN (SELECT id FROM users WHERE role = 'seller' AND status = 'active'))
+		 ${conditions.length ? `AND ${conditions.join(" AND ")}` : ""}
+		 ORDER BY ${orderBy}`,
 		values,
 		(error, products) => {
 			if (error) {
@@ -49,6 +52,42 @@ const listMyProducts = (req, res) => {
 			return res.json({ products });
 		}
 	);
+};
+
+const getMyPerformance = (req, res) => {
+	const summarySql = `
+		SELECT
+			(SELECT COUNT(*) FROM products WHERE seller_id = ?) AS listings,
+			(SELECT COALESCE(SUM(stock), 0) FROM products WHERE seller_id = ?) AS inventory,
+			COUNT(DISTINCT CASE WHEN orders.status <> 'cancelled' THEN orders.id END) AS orders,
+			COALESCE(SUM(CASE WHEN orders.status <> 'cancelled' THEN order_items.quantity ELSE 0 END), 0) AS unitsSold,
+			COALESCE(SUM(CASE WHEN orders.status <> 'cancelled' THEN order_items.unit_price * order_items.quantity ELSE 0 END), 0) AS grossSales
+		FROM products
+		LEFT JOIN order_items ON order_items.product_id = products.id
+		LEFT JOIN orders ON orders.id = order_items.order_id
+		WHERE products.seller_id = ?
+	`;
+	db.query(summarySql, [req.user.id, req.user.id, req.user.id], (summaryError, summaryRows) => {
+		if (summaryError) return res.status(500).json({ message: "Could not load seller performance" });
+		db.query(
+			`SELECT
+				DATE_FORMAT(orders.created_at, '%Y-%m') AS month,
+				COALESCE(SUM(order_items.unit_price * order_items.quantity), 0) AS grossSales,
+				COALESCE(SUM(order_items.quantity), 0) AS unitsSold
+			 FROM products
+			 INNER JOIN order_items ON order_items.product_id = products.id
+			 INNER JOIN orders ON orders.id = order_items.order_id AND orders.status <> 'cancelled'
+			 WHERE products.seller_id = ?
+				AND orders.created_at >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 5 MONTH), '%Y-%m-01')
+			 GROUP BY DATE_FORMAT(orders.created_at, '%Y-%m')
+			 ORDER BY month`,
+			[req.user.id],
+			(monthlyError, monthlySales) => {
+				if (monthlyError) return res.status(500).json({ message: "Could not load seller performance" });
+				return res.json({ summary: summaryRows[0], monthlySales });
+			}
+		);
+	});
 };
 
 const addProduct = (req, res) => {
@@ -78,4 +117,4 @@ const addProduct = (req, res) => {
 	);
 };
 
-module.exports = { listProducts, listMyProducts, addProduct };
+module.exports = { listProducts, listMyProducts, getMyPerformance, addProduct };

@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(254) NOT NULL,
     password VARCHAR(255) NOT NULL,
     role ENUM('buyer', 'seller', 'admin') NOT NULL DEFAULT 'buyer',
+    status ENUM('active', 'disabled', 'deleted') NOT NULL DEFAULT 'active',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     UNIQUE KEY users_email_unique (email)

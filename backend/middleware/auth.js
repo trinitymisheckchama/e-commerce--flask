@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+const db = require("../config/db");
 
 const auth = (req,res,next)=>{
 
@@ -21,9 +22,18 @@ const auth = (req,res,next)=>{
             process.env.JWT_SECRET
         );
 
-        req.user = decoded;
-
-        next();
+        db.query(
+            "SELECT id, role, status FROM users WHERE id = ? LIMIT 1",
+            [decoded.id],
+            (error, users) => {
+                if (error) return res.status(500).json({ message: "Could not verify account" });
+                if (!users.length || users[0].status !== "active") {
+                    return res.status(403).json({ message: "This account is disabled" });
+                }
+                req.user = { id: users[0].id, role: users[0].role };
+                next();
+            }
+        );
 
     }
 

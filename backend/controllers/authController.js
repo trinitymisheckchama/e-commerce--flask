@@ -82,7 +82,7 @@ const login = (req,res)=>{
     }
 
     const sql =
-    "SELECT * FROM users WHERE email=? OR username=? LIMIT 1";
+    "SELECT * FROM users WHERE (email=? OR username=?) AND status = 'active' LIMIT 1";
 
     db.query(
         sql,

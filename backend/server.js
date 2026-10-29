@@ -9,6 +9,7 @@ if (!process.env.JWT_SECRET) {
 }
 const authRoutes = require("./routes/auth");
 const productRoutes = require("./routes/productRoutes");
+const adminRoutes = require("./routes/adminRoutes");
 
 
 require("./config/db");
@@ -21,6 +22,7 @@ app.use(express.static(path.join(__dirname, "../frontend")));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
+app.use("/api/admin", adminRoutes);
 
 const auth = require("./middleware/auth");
 const roleCheck = require("./middleware/roleCheck");
