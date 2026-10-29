@@ -3,11 +3,141 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>e-commerce</title>
+    <meta name="theme-color" content="#f6f5f0">
+    <meta name="description" content="Thoughtful finds from independent makers and everyday essentials, all in one place.">
+    <title>Good Goods — a little shop for good things</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <script src="app.js" defer></script>
 </head>
 <body>
-    <h1>WELCOME ....</h1>
-    <H2>CLICK BUTTON BELOW TO CHECK THE AVAILABLE ITEMS </H2>
+    <div class="announcement">Small shops, good finds <span aria-hidden="true">·</span> Meet your new favorites</div>
+    <header class="site-header">
+        <a class="wordmark" href="#top" aria-label="Good Goods home">good<span>goods</span><i>.</i></a>
+        <form class="search" id="search-form" role="search">
+            <label class="visually-hidden" for="search-input">Search products</label>
+            <span aria-hidden="true">⌕</span>
+            <input id="search-input" type="search" placeholder="Search the good stuff">
+            <button type="submit">Search</button>
+        </form>
+        <nav class="header-actions" aria-label="Account and basket">
+            <button class="text-button" id="account-button" type="button">Sign in</button>
+            <button class="bag-button" id="bag-button" type="button" aria-label="Open shopping bag">Bag <span id="bag-count">0</span></button>
+        </nav>
+    </header>
+
+    <main id="top">
+        <section class="hero" aria-labelledby="hero-title">
+            <div class="hero-copy">
+                <p class="eyebrow">A marketplace with a point of view</p>
+                <h1 id="hero-title">Find the things<br>you’ll <em>keep.</em></h1>
+                <p class="hero-description">Useful, lovely, made-to-last things from people who care about what they make.</p>
+                <a class="hero-link" href="#shop">Explore the collection <span aria-hidden="true">↘</span></a>
+            </div>
+            <div class="hero-art" role="img" aria-label="A sunlit still life of carefully chosen home goods">
+                <div class="hero-stamp">GOOD<br>THINGS<br>LIVE HERE</div>
+                <span class="hero-caption">A little more considered. A lot more you.</span>
+            </div>
+            <div class="hero-index"><span>01</span> / THE EVERYDAY EDIT</div>
+        </section>
+
+        <section class="shop-section" id="shop" aria-labelledby="shop-title">
+            <div class="shop-heading">
+                <div>
+                    <p class="eyebrow">The good goods edit</p>
+                    <h2 id="shop-title">A good place to start.</h2>
+                </div>
+                <label class="sort-control" for="sort-select">Sort by
+                    <select id="sort-select">
+                        <option value="newest">Just in</option>
+                        <option value="price_asc">Price: low to high</option>
+                        <option value="price_desc">Price: high to low</option>
+                        <option value="name">Name</option>
+                    </select>
+                </label>
+            </div>
+            <div class="category-row" id="category-row" aria-label="Filter by category"></div>
+            <p class="results-line" id="results-line" aria-live="polite">Finding the good stuff...</p>
+            <div class="product-grid" id="product-grid" aria-live="polite"></div>
+        </section>
+
+        <section class="seller-strip">
+            <div>
+                <p class="eyebrow">For the people who make</p>
+                <h2>Make something good?<br>There’s room for you here.</h2>
+            </div>
+            <button class="seller-cta" id="seller-button" type="button">Open a shop <span aria-hidden="true">↗</span></button>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <a class="wordmark" href="#top">good<span>goods</span><i>.</i></a>
+        <p>Made for finding your next favorite thing.</p>
+        <span>© <span id="year"></span> Good Goods</span>
+    </footer>
+
+    <div class="scrim" id="scrim" hidden></div>
+    <aside class="cart-panel" id="cart-panel" aria-labelledby="cart-title" aria-hidden="true">
+        <div class="panel-heading">
+            <div><p class="eyebrow">Your good finds</p><h2 id="cart-title">Your bag <span id="cart-count-label">(0)</span></h2></div>
+            <button class="close-button" id="close-cart" type="button" aria-label="Close shopping bag">×</button>
+        </div>
+        <div class="cart-items" id="cart-items"></div>
+        <div class="cart-bottom">
+            <div class="cart-total"><span>Subtotal</span><strong id="cart-total">$0.00</strong></div>
+            <p class="cart-note">Order placement is a demo. No payment is collected.</p>
+            <button class="checkout-button" id="checkout-button" type="button">Place order <span aria-hidden="true">→</span></button>
+        </div>
+    </aside>
+
+    <dialog class="dialog" id="account-dialog" aria-labelledby="account-title">
+        <button class="close-button dialog-close" type="button" aria-label="Close">×</button>
+        <p class="eyebrow">Good to see you</p>
+        <h2 id="account-title">Welcome back.</h2>
+        <div class="auth-tabs" role="tablist" aria-label="Account action">
+            <button class="auth-tab is-active" id="login-tab" type="button" role="tab" aria-selected="true">Sign in</button>
+            <button class="auth-tab" id="register-tab" type="button" role="tab" aria-selected="false">Create account</button>
+        </div>
+        <form class="form-stack" id="account-form">
+            <label class="form-field" id="username-field" hidden>Name<input name="username" autocomplete="name"></label>
+            <label class="form-field" id="email-label">Email or username<input name="email" type="text" autocomplete="username" required></label>
+            <label class="form-field">Password<input name="password" type="password" minlength="8" autocomplete="current-password" required></label>
+            <label class="form-field" id="role-field" hidden>I'm here as
+                <select name="role"><option value="buyer">A shopper</option><option value="seller">A seller</option></select>
+            </label>
+            <p class="form-message" id="account-message" aria-live="polite"></p>
+            <button class="primary-button" type="submit" id="account-submit">Sign in</button>
+        </form>
+    </dialog>
+
+    <dialog class="dialog" id="admin-dialog" aria-labelledby="admin-title">
+        <button class="close-button dialog-close" type="button" aria-label="Close">×</button>
+        <p class="eyebrow">Good Goods</p>
+        <h2 id="admin-title">Admin dashboard</h2>
+        <p id="admin-message" aria-live="polite">Loading dashboard...</p>
+        <button class="primary-button" id="admin-signout" type="button">Sign out</button>
+    </dialog>
+
+    <dialog class="dialog" id="seller-dialog" aria-labelledby="seller-title">
+        <button class="close-button dialog-close" type="button" aria-label="Close">×</button>
+        <p class="eyebrow">Seller studio</p>
+        <h2 id="seller-title">Put it out there.</h2>
+        <form class="form-stack" id="product-form">
+            <label class="form-field">Product name<input name="name" maxlength="120" required></label>
+            <label class="form-field">Description<textarea name="description" rows="3" maxlength="1000"></textarea></label>
+            <div class="form-pair">
+                <label class="form-field">Price<input name="price" type="number" min="0.01" step="0.01" required></label>
+                <label class="form-field">In stock<input name="stock" type="number" min="0" step="1" value="1" required></label>
+            </div>
+            <label class="form-field">Category<input name="category" maxlength="60" placeholder="Home, accessories, pantry..." required></label>
+            <label class="form-field">Image URL<input name="image_url" type="url" placeholder="https://..."></label>
+            <p class="form-message" id="product-message" aria-live="polite"></p>
+            <button class="primary-button" type="submit">List this product</button>
+        </form>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
 </body>
 </html>

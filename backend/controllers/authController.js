@@ -6,12 +6,18 @@ const register = async (req,res)=>{
 
     try{
 
-        const {username,email,password,role} = req.body;
+        const { username, email, password, role = "buyer" } = req.body;
 
-        if(!username || !email || !password){
+        if (!username?.trim() || !email?.trim() || !password) {
 
             return res.status(400).json({
                 message:"All fields required"
+            });
+        }
+
+        if (!/^\S+@\S+\.\S+$/.test(email.trim()) || password.length < 8 || !["buyer", "seller"].includes(role)) {
+            return res.status(400).json({
+                message: "Use a valid email, a password of at least 8 characters, and a buyer or seller account"
             });
         }
 
@@ -27,8 +33,8 @@ const register = async (req,res)=>{
         db.query(
             sql,
             [
-                username,
-                email,
+                username.trim(),
+                email.trim().toLowerCase(),
                 hashedPassword,
                 role || "buyer"
             ],
@@ -36,10 +42,8 @@ const register = async (req,res)=>{
 
                 if(err){
 
-                    console.log(err);
-
                     return res.status(500).json({
-                        message:"Registration failed"
+                        message: err.code === "ER_DUP_ENTRY" ? "An account with that email already exists" : "Registration failed"
                     });
                 }
 
@@ -67,21 +71,22 @@ const register = async (req,res)=>{
 
 const login = (req,res)=>{
 
-    const {email,password} = req.body;
+    const { email, username, password } = req.body;
+    const identifier = (email || username || "").trim();
 
-    if(!email || !password){
+    if (!identifier || !password) {
 
         return res.status(400).json({
-            message:"Email and password required"
+            message:"Email or username and password required"
         });
     }
 
     const sql =
-    "SELECT * FROM users WHERE email=?";
+    "SELECT * FROM users WHERE email=? OR username=? LIMIT 1";
 
     db.query(
         sql,
-        [email],
+        [identifier.toLowerCase(), identifier],
         async (err,results)=>{
 
             if(err){
@@ -100,11 +105,12 @@ const login = (req,res)=>{
 
             const user = results[0];
 
-            const match =
-            await bcrypt.compare(
-                password,
-                user.password
-            );
+            let match;
+            try {
+                match = await bcrypt.compare(password, user.password);
+            } catch (error) {
+                return res.status(500).json({ message: "Server error" });
+            }
 
             if(!match){
 

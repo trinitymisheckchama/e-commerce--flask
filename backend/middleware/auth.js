@@ -2,7 +2,10 @@ const jwt = require("jsonwebtoken");
 
 const auth = (req,res,next)=>{
 
-    const token = req.headers.authorization;
+    const authorization = req.headers.authorization || "";
+    const token = authorization.startsWith("Bearer ")
+        ? authorization.slice(7)
+        : authorization;
 
     if(!token){
 
