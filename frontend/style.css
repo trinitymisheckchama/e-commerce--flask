@@ -101,6 +101,17 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
     font-size: 12px;
     font-weight: 700;
 }
+.seller-header-signout, .seller-signout-button {
+    min-height: 36px;
+    padding: 0 12px;
+    border: 1px solid var(--green);
+    background: transparent;
+    color: var(--green);
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 700;
+}
+.seller-header-signout:hover, .seller-signout-button:hover { background: var(--green); color: white; }
 .header-actions { display: flex; justify-content: flex-end; align-items: center; gap: 23px; }
 .bag-button {
     display: flex;
@@ -386,6 +397,17 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .cart-total { display: flex; justify-content: space-between; font-size: 13px; }
 .cart-note { margin: 6px 0 15px; color: var(--muted); font-size: 10px; }
 .checkout-button { width: 100%; }
+.payment-note, .seller-list-message { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
+.seller-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.seller-heading h2 { margin-bottom: 12px; }
+.seller-signout-button { flex: 0 0 auto; }
+.seller-listings { max-height: 210px; overflow-y: auto; border-top: 1px solid var(--line); }
+.seller-listing { display: flex; justify-content: space-between; align-items: center; gap: 14px; padding: 11px 0; border-bottom: 1px solid var(--line); }
+.seller-listing-copy { min-width: 0; display: grid; gap: 4px; }
+.seller-listing-copy strong { overflow: hidden; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.seller-listing-copy span { color: var(--muted); font-size: 10px; }
+.seller-listing-price { flex: 0 0 auto; font-size: 12px; }
+.seller-form-title { margin: 20px 0 -7px; font-size: 16px; }
 
 .dialog {
     position: fixed;

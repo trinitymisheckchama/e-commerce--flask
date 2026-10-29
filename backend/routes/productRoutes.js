@@ -8,9 +8,11 @@ const roleCheck = require("../middleware/roleCheck");
 
 const {
     listProducts,
+    listMyProducts,
     addProduct
 } = require("../controllers/productController");
 
+router.get("/mine", auth, roleCheck("seller"), listMyProducts);
 router.get("/", listProducts);
 router.post("/checkout", auth, roleCheck("buyer"), checkout);
 

@@ -9,6 +9,10 @@ const query = (connection, sql, values = []) => new Promise((resolve, reject) =>
 
 const checkout = async (req, res) => {
     const items = req.body.items;
+    const paymentMethod = req.body.paymentMethod;
+    if (paymentMethod !== "cash_on_delivery") {
+        return res.status(400).json({ message: "Choose a supported payment method" });
+    }
     if (!Array.isArray(items) || items.length === 0 || items.some((item) =>
         !item || !Number.isInteger(Number(item.productId)) || !Number.isInteger(Number(item.quantity)) || Number(item.quantity) < 1
     )) {
@@ -54,8 +58,8 @@ const checkout = async (req, res) => {
                         sum + Number(product.price) * quantities.get(product.id), 0);
                     const order = await query(
                         connection,
-                        "INSERT INTO orders (buyer_id, total, status) VALUES (?, ?, 'placed')",
-                        [req.user.id, total.toFixed(2)]
+                        "INSERT INTO orders (buyer_id, total, status, payment_method, payment_status) VALUES (?, ?, 'placed', ?, 'pending')",
+                        [req.user.id, total.toFixed(2), paymentMethod]
                     );
 
                     for (const product of products) {
@@ -76,7 +80,12 @@ const checkout = async (req, res) => {
                             });
                         }
                         connection.release();
-                        return res.status(201).json({ orderId: order.insertId, total: total.toFixed(2) });
+                        return res.status(201).json({
+                            orderId: order.insertId,
+                            total: total.toFixed(2),
+                            paymentMethod,
+                            paymentStatus: "pending"
+                        });
                     });
                 } catch (error) {
                     connection.rollback(() => {

@@ -37,6 +37,20 @@ const listProducts = (req, res) => {
 	);
 };
 
+const listMyProducts = (req, res) => {
+	db.query(
+		`SELECT id, name, description, price, category, image_url, stock, created_at
+		 FROM products WHERE seller_id = ? ORDER BY created_at DESC`,
+		[req.user.id],
+		(error, products) => {
+			if (error) {
+				return res.status(500).json({ message: "Could not load your listings" });
+			}
+			return res.json({ products });
+		}
+	);
+};
+
 const addProduct = (req, res) => {
 	const { name, description = "", price, category, image_url = "", stock = 0 } = req.body;
 	const parsedPrice = Number(price);
@@ -64,4 +78,4 @@ const addProduct = (req, res) => {
 	);
 };
 
-module.exports = { listProducts, addProduct };
+module.exports = { listProducts, listMyProducts, addProduct };

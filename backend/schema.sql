@@ -31,6 +31,8 @@ CREATE TABLE IF NOT EXISTS orders (
     buyer_id BIGINT UNSIGNED NOT NULL,
     total DECIMAL(10, 2) NOT NULL,
     status ENUM('placed', 'cancelled', 'fulfilled') NOT NULL DEFAULT 'placed',
+    payment_method ENUM('cash_on_delivery') NOT NULL DEFAULT 'cash_on_delivery',
+    payment_status ENUM('pending', 'paid', 'failed', 'refunded') NOT NULL DEFAULT 'pending',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     KEY orders_buyer_idx (buyer_id),

@@ -24,6 +24,7 @@
         </form>
         <nav class="header-actions" aria-label="Account and basket">
             <button class="text-button" id="account-button" type="button">Sign in</button>
+            <button class="seller-header-signout" id="seller-header-signout" type="button" hidden>Sign out</button>
             <button class="bag-button" id="bag-button" type="button" aria-label="Open shopping bag">Bag <span id="bag-count">0</span></button>
         </nav>
     </header>
@@ -87,10 +88,27 @@
         <div class="cart-items" id="cart-items"></div>
         <div class="cart-bottom">
             <div class="cart-total"><span>Subtotal</span><strong id="cart-total">$0.00</strong></div>
-            <p class="cart-note">Order placement is a demo. No payment is collected.</p>
-            <button class="checkout-button" id="checkout-button" type="button">Place order <span aria-hidden="true">→</span></button>
+            <p class="cart-note">Choose a payment method to continue.</p>
+            <button class="checkout-button" id="checkout-button" type="button">Continue to payment <span aria-hidden="true">→</span></button>
         </div>
     </aside>
+
+    <dialog class="dialog" id="payment-dialog" aria-labelledby="payment-title">
+        <button class="close-button dialog-close" type="button" aria-label="Close">×</button>
+        <p class="eyebrow">Payment</p>
+        <h2 id="payment-title">How would you like to pay?</h2>
+        <form class="form-stack" id="payment-form">
+            <label class="form-field" for="payment-method">Payment method
+                <select id="payment-method" name="paymentMethod" required>
+                    <option value="cash_on_delivery">Cash on delivery</option>
+                </select>
+            </label>
+            <p class="payment-note">Your order will be reserved now. Payment is due when it is delivered.</p>
+            <div class="cart-total"><span>Order total</span><strong id="payment-total">$0.00</strong></div>
+            <p class="form-message" id="payment-message" aria-live="polite"></p>
+            <button class="primary-button" id="payment-submit" type="submit">Confirm order</button>
+        </form>
+    </dialog>
 
     <dialog class="dialog" id="account-dialog" aria-labelledby="account-title">
         <button class="close-button dialog-close" type="button" aria-label="Close">×</button>
@@ -123,7 +141,13 @@
     <dialog class="dialog" id="seller-dialog" aria-labelledby="seller-title">
         <button class="close-button dialog-close" type="button" aria-label="Close">×</button>
         <p class="eyebrow">Seller studio</p>
-        <h2 id="seller-title">Put it out there.</h2>
+        <div class="seller-heading">
+            <h2 id="seller-title">Your listings</h2>
+            <button class="seller-signout-button" id="seller-signout" type="button">Sign out</button>
+        </div>
+        <p class="seller-list-message" id="seller-list-message" aria-live="polite">Loading your listings...</p>
+        <div class="seller-listings" id="seller-listings"></div>
+        <h3 class="seller-form-title">List a product</h3>
         <form class="form-stack" id="product-form">
             <label class="form-field">Product name<input name="name" maxlength="120" required></label>
             <label class="form-field">Description<textarea name="description" rows="3" maxlength="1000"></textarea></label>

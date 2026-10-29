@@ -1,6 +1,6 @@
 # Good Goods
 
-A small marketplace MVP built with Express, MySQL, and a vanilla HTML/CSS/JavaScript storefront. Shoppers can browse and search inventory, create an account, keep a local shopping bag, and place orders. Sellers can create listings. Orders reserve inventory transactionally; payment processing is not included.
+A small marketplace MVP built with Express, MySQL, and a vanilla HTML/CSS/JavaScript storefront. Shoppers can browse and search inventory, create an account, keep a local shopping bag, choose cash on delivery, and place orders. Sellers can create listings and view their own products. Orders reserve inventory transactionally; online card processing is not included.
 
 ## Requirements
 
@@ -31,6 +31,12 @@ A small marketplace MVP built with Express, MySQL, and a vanilla HTML/CSS/JavaSc
    JWT_SECRET=replace_with_a_long_random_secret
    ```
 
+For an existing database created before payment selection was added, apply the migration once:
+
+```sh
+mysql -u YOUR_DB_USER -p YOUR_DB_NAME < backend/migrations/001_order_payments.sql
+```
+
 3. Install dependencies and start the server:
 
    ```sh
@@ -43,7 +49,7 @@ A small marketplace MVP built with Express, MySQL, and a vanilla HTML/CSS/JavaSc
 
 With `NODE_ENV=development`, the server creates a one-time admin account after connecting to MySQL if its username and email are unused: username `admin`, password `Admin123`. Sign in with those credentials and choose **Admin dashboard** in the header. The bootstrap is disabled unless development mode is explicitly enabled; never deploy with the development credentials enabled.
 
-The API is available at `/api/products` and `/api/auth`. Register as a shopper to place orders, or as a seller to add products. Sample catalog images are served by Unsplash URLs; sellers can provide their own HTTPS image URL.
+The API is available at `/api/products` and `/api/auth`. Register as a shopper to place orders, or as a seller to add products and view seller-owned listings. Checkout currently supports cash on delivery; accepting card payments requires integrating a payment provider. Sample catalog images are served by Unsplash URLs; sellers can provide their own HTTPS image URL.
 
 ## API
 
@@ -51,4 +57,5 @@ The API is available at `/api/products` and `/api/auth`. Register as a shopper t
 - `POST /api/auth/register` creates a buyer or seller account.
 - `POST /api/auth/login` returns a signed token.
 - `POST /api/products/add` creates a product for an authenticated seller.
+- `GET /api/products/mine` lists products for the authenticated seller.
 - `POST /api/products/checkout` places an order for an authenticated buyer and decrements stock in a MySQL transaction.

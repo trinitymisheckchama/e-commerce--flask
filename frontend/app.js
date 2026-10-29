@@ -18,11 +18,18 @@ const elements = {
     productForm: document.querySelector("#product-form"),
     productGrid: document.querySelector("#product-grid"),
     productMessage: document.querySelector("#product-message"),
+    paymentDialog: document.querySelector("#payment-dialog"),
+    paymentForm: document.querySelector("#payment-form"),
+    paymentMessage: document.querySelector("#payment-message"),
+    paymentSubmit: document.querySelector("#payment-submit"),
+    paymentTotal: document.querySelector("#payment-total"),
     resultsLine: document.querySelector("#results-line"),
     searchForm: document.querySelector("#search-form"),
     searchInput: document.querySelector("#search-input"),
     sellerButton: document.querySelector("#seller-button"),
     sellerDialog: document.querySelector("#seller-dialog"),
+    sellerListings: document.querySelector("#seller-listings"),
+    sellerListMessage: document.querySelector("#seller-list-message"),
     sortSelect: document.querySelector("#sort-select"),
     scrim: document.querySelector("#scrim"),
     toast: document.querySelector("#toast")
@@ -296,9 +303,11 @@ function openAccount(mode = "login") {
 }
 
 function renderAccountButton() {
+    const isSeller = state.user?.role === "seller";
+    document.querySelector("#seller-header-signout").hidden = !isSeller;
     if (!state.user) {
         elements.accountButton.textContent = "Sign in";
-    } else if (state.user.role === "seller") {
+    } else if (isSeller) {
         elements.accountButton.textContent = "Seller studio";
     } else if (state.user.role === "admin") {
         elements.accountButton.textContent = "Admin dashboard";
@@ -318,11 +327,39 @@ async function openAdminDashboard() {
     }
 }
 
+async function openSellerDashboard() {
+    elements.sellerDialog.showModal();
+    await loadSellerListings();
+}
+
+async function loadSellerListings() {
+    elements.sellerListMessage.textContent = "Loading your listings...";
+    elements.sellerListings.replaceChildren();
+    try {
+        const data = await request("/api/products/mine");
+        const products = data.products || [];
+        elements.sellerListMessage.textContent = products.length
+            ? `${products.length} ${products.length === 1 ? "listed product" : "listed products"}`
+            : "You haven’t listed any products yet.";
+        products.forEach((product) => {
+            const row = makeElement("article", "seller-listing");
+            const copy = makeElement("div", "seller-listing-copy");
+            copy.append(makeElement("strong", "", product.name));
+            copy.append(makeElement("span", "", `${product.category} · ${product.stock} in stock`));
+            row.append(copy, makeElement("strong", "seller-listing-price", currency.format(Number(product.price))));
+            elements.sellerListings.append(row);
+        });
+    } catch (error) {
+        elements.sellerListMessage.textContent = error.message;
+    }
+}
+
 function signOut() {
     state.user = null;
     localStorage.removeItem("goodgoods-user");
     renderAccountButton();
     elements.adminDialog.close();
+    elements.sellerDialog.close();
     showToast("You’re signed out.");
 }
 
@@ -363,14 +400,13 @@ async function handleProductSubmit(event) {
     elements.productForm.querySelector("button[type=submit]").disabled = true;
     try {
         await request("/api/products/add", { method: "POST", body: JSON.stringify(payload) });
-        elements.sellerDialog.close();
         elements.productForm.reset();
         state.category = "";
         state.search = "";
         elements.searchInput.value = "";
         showToast("Your product is now on the shelf.");
+        await loadSellerListings();
         await loadProducts();
-        document.querySelector("#shop").scrollIntoView({ behavior: "smooth" });
     } catch (error) {
         elements.productMessage.textContent = error.message;
     } finally {
@@ -395,22 +431,42 @@ async function placeOrder() {
         return;
     }
 
-    elements.checkoutButton.disabled = true;
+    elements.paymentTotal.textContent = currency.format(entries.reduce(
+        (sum, entry) => sum + Number(entry.product.price) * entry.quantity, 0
+    ));
+    elements.paymentMessage.textContent = "";
+    closeCart();
+    elements.paymentDialog.showModal();
+}
+
+async function handlePaymentSubmit(event) {
+    event.preventDefault();
+    const entries = cartEntries();
+    if (!entries.length) {
+        elements.paymentDialog.close();
+        showToast("Your bag is empty for now.");
+        return;
+    }
+
+    elements.paymentSubmit.disabled = true;
     try {
         const data = await request("/api/products/checkout", {
             method: "POST",
-            body: JSON.stringify({ items: entries.map(({ product, quantity }) => ({ productId: product.id, quantity })) })
+            body: JSON.stringify({
+                paymentMethod: elements.paymentForm.elements.paymentMethod.value,
+                items: entries.map(({ product, quantity }) => ({ productId: product.id, quantity }))
+            })
         });
         state.cart = {};
         saveCart();
         renderCart();
-        closeCart();
-        showToast(`Order #${data.orderId} placed. Total ${currency.format(Number(data.total))}.`);
+        elements.paymentDialog.close();
+        showToast(`Order #${data.orderId} confirmed. Pay ${currency.format(Number(data.total))} on delivery.`);
         await loadProducts();
     } catch (error) {
-        showToast(error.message);
+        elements.paymentMessage.textContent = error.message;
     } finally {
-        elements.checkoutButton.disabled = false;
+        elements.paymentSubmit.disabled = false;
     }
 }
 
@@ -425,15 +481,18 @@ elements.bagButton.addEventListener("click", openCart);
 document.querySelector("#close-cart").addEventListener("click", closeCart);
 elements.scrim.addEventListener("click", closeCart);
 elements.checkoutButton.addEventListener("click", placeOrder);
+elements.paymentForm.addEventListener("submit", handlePaymentSubmit);
 elements.accountButton.addEventListener("click", () => {
     if (!state.user) openAccount();
-    else if (state.user.role === "seller") elements.sellerDialog.showModal();
+    else if (state.user.role === "seller") openSellerDashboard();
     else if (state.user.role === "admin") openAdminDashboard();
     else signOut();
 });
 document.querySelector("#admin-signout").addEventListener("click", signOut);
+document.querySelector("#seller-signout").addEventListener("click", signOut);
+document.querySelector("#seller-header-signout").addEventListener("click", signOut);
 elements.sellerButton.addEventListener("click", () => {
-    if (state.user?.role === "seller") elements.sellerDialog.showModal();
+    if (state.user?.role === "seller") openSellerDashboard();
     else if (state.user) showToast("Sign out and create a seller account to open a shop.");
     else {
         openAccount("register");
